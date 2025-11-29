@@ -1,57 +1,889 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Glassify — IT WORKS</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    body::before {content:'';position:fixed;inset:0;background:linear-gradient(135deg,#0f0526,#1a0033);background-image:url('https://images.unsplash.com/photo-1614149162883-504ce4d13909?w=1920');background-size:cover;filter:brightness(0.3) blur(2px);}
-    .glass {backdrop-filter:blur(20px);background:rgba(255,255,255,0.09);border:1px solid rgba(255,255,255,0.2);}
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KozyFlix</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/lucide-react@0.323.0/dist/umd/lucide-react.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        .hero-gradient {
+            background: linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.8) 100%);
+        }
+        .hero-side-gradient {
+            background: linear-gradient(to right, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0) 30%);
+        }
+        .glass {
+            background: rgba(255,255,255,0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .glass-card {
+            background: rgba(255,255,255,0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 1rem;
+        }
+        .glass-hover:hover {
+            background: rgba(255,255,255,0.1);
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+            height: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.2);
+            border-radius: 4px;
+        }
+        .animation-delay-500 {
+            animation-delay: 500ms;
+        }
+    </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#ef4444',
+                        'primary-foreground': '#ffffff',
+                        background: '#000000',
+                        secondary: '#1f2937',
+                        muted: '#1f2937',
+                        'muted-foreground': '#9ca3af',
+                        glass: 'rgba(255,255,255,0.05)',
+                        'glass-border': 'rgba(255,255,255,0.1)',
+                        accent: '#374151',
+                        destructive: '#ef4444',
+                        ring: '#3b82f6',
+                        input: '#d1d5db',
+                    },
+                    fontFamily: {
+                        space: ['Space Grotesk', 'sans-serif'],
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.3s ease-out',
+                        'fade-in-up': 'fadeInUp 0.3s ease-out',
+                        'scale-in': 'scaleIn 0.3s ease-out',
+                        'float': 'float 3s ease-in-out infinite',
+                        'glow-pulse': 'glowPulse 2s ease-in-out infinite',
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' },
+                        },
+                        fadeInUp: {
+                            '0%': { opacity: '0', transform: 'translateY(20px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        },
+                        scaleIn: {
+                            '0%': { opacity: '0', transform: 'scale(0.95)' },
+                            '100%': { opacity: '1', transform: 'scale(1)' },
+                        },
+                        float: {
+                            '0%': { transform: 'translateY(0px)' },
+                            '50%': { transform: 'translateY(-10px)' },
+                            '100%': { transform: 'translateY(0px)' },
+                        },
+                        glowPulse: {
+                            '0%': { boxShadow: '0 0 0 0 rgba(239,68,68,0.4)' },
+                            '70%': { boxShadow: '0 0 0 10px rgba(239,68,68,0)' },
+                            '100%': { boxShadow: '0 0 0 0 rgba(239,68,68,0)' },
+                        },
+                    },
+                },
+            },
+        };
+    </script>
 </head>
-<body class="text-white min-h-screen flex flex-col items-center justify-center p-8">
+<body class="bg-background text-foreground">
+    <div id="root"></div>
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
 
-  <h1 class="text-6xl font-bold mb-12 bg-gradient-to-r from-pink-500 to-violet-500 bg-clip-text text-transparent">Glassify</h1>
+        const cn = (...inputs) => inputs.filter(Boolean).join(' ');
 
-  <div class="glass rounded-2xl p-8 w-full max-w-2xl">
-    <input id="url" type="text" placeholder="Paste any YouTube link…" class="w-full bg-transparent outline-none text-2xl placeholder-white/50">
-    <button onclick="play()" class="mt-6 w-full bg-white text-black py-4 rounded-xl font-bold text-xl hover:scale-105 transition">
-      PLAY INSTANTLY
-    </button>
-  </div>
+        const Button = ({ variant = 'default', size = 'default', className = '', children, ...props }) => {
+            let classes = 'inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50';
 
-  <div id="info" class="mt-8 text-center hidden">
-    <img id="thumb" class="w-64 h-64 rounded-2xl mx-auto shadow-2xl">
-    <h2 id="title" class="text-3xl font-bold mt-6"></h2>
-    <p id="artist" class="text-xl opacity-70"></p>
-  </div>
+            switch (variant) {
+                case 'default':
+                    classes += ' bg-primary text-primary-foreground hover:bg-primary/90';
+                    break;
+                case 'destructive':
+                    classes += ' bg-destructive text-destructive-foreground hover:bg-destructive/90';
+                    break;
+                case 'outline':
+                    classes += ' border border-input bg-background hover:bg-accent hover:text-accent-foreground';
+                    break;
+                case 'secondary':
+                    classes += ' bg-secondary text-secondary-foreground hover:bg-secondary/80';
+                    break;
+                case 'ghost':
+                    classes += ' hover:bg-accent hover:text-accent-foreground';
+                    break;
+                case 'link':
+                    classes += ' text-primary underline-offset-4 hover:underline';
+                    break;
+                case 'hero':
+                    classes += ' bg-primary text-primary-foreground hover:bg-primary/90 font-bold';
+                    break;
+                case 'hero-secondary':
+                    classes += ' border border-primary text-primary bg-transparent hover:bg-primary/10';
+                    break;
+                case 'glass':
+                    classes += ' bg-glass text-foreground border border-glass-border hover:bg-glass/20';
+                    break;
+            }
 
-  <audio id="player" controls autoplay class="fixed bottom-8 left-1/2 -translate-x-1/2 w-96"></audio>
+            switch (size) {
+                case 'default':
+                    classes += ' h-10 px-4 py-2';
+                    break;
+                case 'sm':
+                    classes += ' h-9 rounded-md px-3';
+                    break;
+                case 'lg':
+                    classes += ' h-11 rounded-md px-8';
+                    break;
+                case 'icon':
+                    classes += ' h-10 w-10';
+                    break;
+                case 'icon-sm':
+                    classes += ' h-8 w-8';
+                    break;
+                case 'icon-lg':
+                    classes += ' h-12 w-12';
+                    break;
+                case 'xl':
+                    classes += ' h-12 px-6 py-3 text-base';
+                    break;
+            }
 
-<script>
-function play() {
-  const url = document.getElementById("url").value.trim();
-  const id = url.match(/[a-zA-Z0-9_-]{11}/)?.[0];
-  if (!id) return alert("Invalid link");
+            return React.createElement('button', { className: `${classes} ${className}`, ...props }, children);
+        };
 
-  // This proxy is alive and working RIGHT NOW (Nov 29, 2025)
-  const audioUrl = `https://yt5s.io/download?q=${id}&format=mp3`;
+        const { Film, Github, Twitter, Mail, Play, Info, Star, ChevronLeft, ChevronRight, Plus, X, Clock, Calendar, Tv, Search, Menu, Home, TrendingUp } = LucideReact;
 
-  // Get title + thumbnail
-  fetch(`https://noembed.com/embed?url=https://youtu.be/${id}`)
-    .then(r => r.json())
-    .then(data => {
-      document.getElementById("thumb").src = data.thumbnail_url;
-      document.getElementById("title").textContent = data.title;
-      document.getElementById("artist").textContent = data.author_name;
-      document.getElementById("info").classList.remove("hidden");
-    });
+        // lib/tmdb
+        const API_KEY = 'your_tmdb_api_key_here'; // Replace with your actual TMDB API key
+        const BASE_URL = 'https://api.themoviedb.org/3';
+        const IMAGE_BASE = 'https://image.tmdb.org/t/p/';
 
-  // Play the actual audio
-  document.getElementById("player").src = audioUrl;
-}
-</script>
+        const fetchTMDB = async (path) => {
+            const response = await fetch(`${BASE_URL}${path}?api_key=${API_KEY}`);
+            if (!response.ok) throw new Error('Failed to fetch');
+            const data = await response.json();
+            return data.results || data;
+        };
 
+        const getTrending = async (media_type, time_window) => fetchTMDB(`/trending/${media_type}/${time_window}`);
+
+        const getPopularMovies = async () => fetchTMDB('/movie/popular');
+
+        const getTopRatedMovies = async () => fetchTMDB('/movie/top_rated');
+
+        const getUpcomingMovies = async () => fetchTMDB('/movie/upcoming');
+
+        const getPopularTV = async () => fetchTMDB('/tv/popular');
+
+        const getTopRatedTV = async () => fetchTMDB('/tv/top_rated');
+
+        const getMovieDetails = async (id) => fetchTMDB(`/movie/${id}`);
+
+        const getTVDetails = async (id) => fetchTMDB(`/tv/${id}`);
+
+        const getImageUrl = (path, size) => path ? `${IMAGE_BASE}${size}${path}` : null;
+
+        const getBackdropUrl = (path, size) => getImageUrl(path, size);
+
+        const searchMulti = async (query) => fetchTMDB(`/search/multi?query=${encodeURIComponent(query)}`);
+
+        const getVidkingUrl = (id, type, season, episode) => {
+            let url = `https://www.vidking.net/embed/${type}/${id}`;
+            if (type === 'tv') {
+                url += `?season=${season}&episode=${episode}`;
+            }
+            return url;
+        };
+
+        // Components
+
+        function Footer() {
+            return (
+                <footer className="glass border-t border-glass-border/20 mt-16">
+                    <div className="container mx-auto px-4 md:px-8 py-12">
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+                            <div className="md:col-span-2 space-y-4">
+                                <div className="flex items-center gap-2">
+                                    <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
+                                        <Film className="w-6 h-6 text-primary-foreground" />
+                                    </div>
+                                    <span className="text-xl font-bold font-space">
+                                        Kozy<span className="text-primary">Flix</span>
+                                    </span>
+                                </div>
+                                <p className="text-muted-foreground text-sm max-w-md">
+                                    Your cozy destination for streaming movies and TV shows. Powered by Vidking
+                                    player with 50K+ movies and 25K+ TV shows available.
+                                </p>
+                            </div>
+                            <div>
+                                <h4 className="font-semibold mb-4">Quick Links</h4>
+                                <ul className="space-y-2 text-sm text-muted-foreground">
+                                    <li><a href="#" className="hover:text-foreground transition-colors">Home</a></li>
+                                    <li><a href="#" className="hover:text-foreground transition-colors">Movies</a></li>
+                                    <li><a href="#" className="hover:text-foreground transition-colors">TV Shows</a></li>
+                                    <li><a href="#" className="hover:text-foreground transition-colors">Trending</a></li>
+                                </ul>
+                            </div>
+                            <div>
+                                <h4 className="font-semibold mb-4">Legal</h4>
+                                <ul className="space-y-2 text-sm text-muted-foreground">
+                                    <li><a href="#" className="hover:text-foreground transition-colors">Privacy Policy</a></li>
+                                    <li><a href="#" className="hover:text-foreground transition-colors">Terms of Service</a></li>
+                                    <li><a href="#" className="hover:text-foreground transition-colors">DMCA</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div className="border-t border-glass-border/20 mt-8 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
+                            <p className="text-sm text-muted-foreground">
+                                © {new Date().getFullYear()} KozyFlix. All rights reserved.
+                            </p>
+                            <div className="flex items-center gap-4">
+                                <a href="#" className="text-muted-foreground hover:text-foreground transition-colors"><Twitter className="w-5 h-5" /></a>
+                                <a href="#" className="text-muted-foreground hover:text-foreground transition-colors"><Github className="w-5 h-5" /></a>
+                                <a href="#" className="text-muted-foreground hover:text-foreground transition-colors"><Mail className="w-5 h-5" /></a>
+                            </div>
+                        </div>
+                    </div>
+                </footer>
+            );
+        }
+
+        function HeroSection({ movie, onPlay, onInfo }) {
+            if (!movie) {
+                return <div className="relative h-[85vh] w-full animate-pulse bg-muted" />;
+            }
+            const backdropUrl = getBackdropUrl(movie.backdrop_path, "original");
+            const title = movie.title || movie.name;
+            const releaseYear = (movie.release_date || movie.first_air_date)?.split("-")[0];
+            return (
+                <section className="relative h-[85vh] w-full overflow-hidden">
+                    <div className="absolute inset-0">
+                        {backdropUrl ? (
+                            <img src={backdropUrl} alt={title} className="w-full h-full object-cover object-center" />
+                        ) : (
+                            <div className="w-full h-full bg-gradient-to-br from-secondary to-background" />
+                        )}
+                    </div>
+                    <div className="absolute inset-0 hero-gradient" />
+                    <div className="absolute inset-0 hero-side-gradient" />
+                    <div className="absolute inset-0 flex items-end pb-32 md:pb-40">
+                        <div className="container mx-auto px-4 md:px-8">
+                            <div className="max-w-2xl space-y-6 animate-fade-in-up">
+                                <div className="flex items-center gap-3">
+                                    <span className="glass px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider">
+                                        {movie.media_type === "tv" ? "TV Series" : "Movie"}
+                                    </span>
+                                    {releaseYear && <span className="text-muted-foreground text-sm">{releaseYear}</span>}
+                                </div>
+                                <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold font-space leading-tight">
+                                    {title}
+                                </h1>
+                                <div className="flex items-center gap-6 text-sm">
+                                    <div className="flex items-center gap-2">
+                                        <Star className="w-5 h-5 text-yellow-500 fill-yellow-500" />
+                                        <span className="font-semibold">{movie.vote_average.toFixed(1)}</span>
+                                        <span className="text-muted-foreground">/ 10</span>
+                                    </div>
+                                    <div className="text-muted-foreground">
+                                        {movie.vote_count.toLocaleString()} votes
+                                    </div>
+                                </div>
+                                <p className="text-muted-foreground text-base md:text-lg leading-relaxed line-clamp-3">
+                                    {movie.overview}
+                                </p>
+                                <div className="flex flex-wrap items-center gap-4 pt-2">
+                                    <Button variant="hero" size="xl" onClick={() => onPlay(movie)} className="group">
+                                        <Play className="w-5 h-5 fill-current group-hover:scale-110 transition-transform" />
+                                        Play Now
+                                    </Button>
+                                    <Button variant="hero-secondary" size="xl" onClick={() => onInfo(movie)}>
+                                        <Info className="w-5 h-5" />
+                                        More Info
+                                    </Button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="absolute top-1/4 right-10 w-32 h-32 glass rounded-full blur-3xl opacity-20 animate-float" />
+                    <div className="absolute bottom-1/3 right-1/4 w-48 h-48 glass rounded-full blur-3xl opacity-10 animate-float animation-delay-500" />
+                </section>
+            );
+        }
+
+        function MovieCard({ movie, onClick, variant = "default" }) {
+            const posterUrl = getImageUrl(movie.poster_path, variant === "large" ? "w500" : "w300");
+            const title = movie.title || movie.name;
+            const releaseYear = (movie.release_date || movie.first_air_date)?.split("-")[0];
+            return (
+                <div className={cn("movie-card group flex-shrink-0", variant === "large" ? "w-[200px] md:w-[240px]" : "w-[150px] md:w-[180px]")} onClick={() => onClick(movie)}>
+                    <div className="relative aspect-[2/3] rounded-xl overflow-hidden glass-card">
+                        {posterUrl ? (
+                            <img src={posterUrl} alt={title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" loading="lazy" />
+                        ) : (
+                            <div className="w-full h-full bg-muted flex items-center justify-center">
+                                <span className="text-muted-foreground text-sm">No Image</span>
+                            </div>
+                        )}
+                        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4">
+                            <div className="absolute inset-0 flex items-center justify-center">
+                                <div className="w-14 h-14 rounded-full bg-primary flex items-center justify-center shadow-lg shadow-primary/50 transform scale-0 group-hover:scale-100 transition-transform duration-300">
+                                    <Play className="w-6 h-6 text-primary-foreground fill-current ml-1" />
+                                </div>
+                            </div>
+                            <div className="relative z-10 space-y-2 translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
+                                <div className="flex items-center gap-2">
+                                    <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
+                                    <span className="text-sm font-medium">{movie.vote_average.toFixed(1)}</span>
+                                </div>
+                                <h3 className="font-semibold text-sm line-clamp-2">{title}</h3>
+                                <p className="text-xs text-muted-foreground">{releaseYear}</p>
+                            </div>
+                        </div>
+                        <div className="absolute top-2 right-2 glass px-2 py-1 rounded-lg text-xs font-semibold flex items-center gap-1 opacity-90">
+                            <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
+                            {movie.vote_average.toFixed(1)}
+                        </div>
+                        {movie.media_type && (
+                            <div className="absolute top-2 left-2 bg-primary/90 px-2 py-1 rounded-lg text-xs font-semibold text-primary-foreground uppercase">
+                                {movie.media_type}
+                            </div>
+                        )}
+                    </div>
+                    <div className="mt-3 px-1 md:hidden">
+                        <h3 className="font-medium text-sm line-clamp-1">{title}</h3>
+                        <p className="text-xs text-muted-foreground mt-1">{releaseYear}</p>
+                    </div>
+                </div>
+            );
+        }
+
+        function MovieCarousel({ title, movies, onMovieClick, variant = "default", isLoading = false }) {
+            const scrollRef = useRef(null);
+            const scroll = (direction) => {
+                if (scrollRef.current) {
+                    const scrollAmount = direction === "left" ? -400 : 400;
+                    scrollRef.current.scrollBy({ left: scrollAmount, behavior: "smooth" });
+                }
+            };
+            if (isLoading) {
+                return (
+                    <section className="py-8">
+                        <div className="container mx-auto px-4 md:px-8">
+                            <div className="h-8 w-48 bg-muted rounded-lg animate-pulse mb-6" />
+                            <div className="flex gap-4 overflow-hidden">
+                                {[...Array(6)].map((_, i) => (
+                                    <div
+                                        key={i}
+                                        className={cn(
+                                            "flex-shrink-0 rounded-xl bg-muted animate-pulse",
+                                            variant === "large" ? "w-[200px] md:w-[240px] aspect-[2/3]" : "w-[150px] md:w-[180px] aspect-[2/3]"
+                                        )}
+                                    />
+                                ))}
+                            </div>
+                        </div>
+                    </section>
+                );
+            }
+            if (!movies.length) return null;
+            return (
+                <section className="py-8 group/carousel">
+                    <div className="container mx-auto px-4 md:px-8">
+                        <div className="flex items-center justify-between mb-6">
+                            <h2 className="text-xl md:text-2xl font-bold font-space">{title}</h2>
+                            <div className="hidden md:flex items-center gap-2 opacity-0 group-hover/carousel:opacity-100 transition-opacity duration-300">
+                                <Button variant="glass" size="icon-sm" onClick={() => scroll("left")} className="rounded-full">
+                                    <ChevronLeft className="w-5 h-5" />
+                                </Button>
+                                <Button variant="glass" size="icon-sm" onClick={() => scroll("right")} className="rounded-full">
+                                    <ChevronRight className="w-5 h-5" />
+                                </Button>
+                            </div>
+                        </div>
+                        <div className="relative -mx-4 md:-mx-8">
+                            <div ref={scrollRef} className="flex gap-4 overflow-x-auto px-4 md:px-8 pb-4 custom-scrollbar scroll-smooth" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
+                                {movies.map((movie) => (
+                                    <MovieCard key={`${movie.media_type || "movie"}-${movie.id}`} movie={movie} onClick={onMovieClick} variant={variant} />
+                                ))}
+                            </div>
+                            <div className="absolute left-0 top-0 bottom-4 w-8 bg-gradient-to-r from-background to-transparent pointer-events-none" />
+                            <div className="absolute right-0 top-0 bottom-4 w-8 bg-gradient-to-l from-background to-transparent pointer-events-none" />
+                        </div>
+                    </div>
+                </section>
+            );
+        }
+
+        function MovieModal({ movie, isOpen, onClose }) {
+            const [details, setDetails] = useState(null);
+            const [isPlaying, setIsPlaying] = useState(false);
+            const [selectedSeason, setSelectedSeason] = useState(1);
+            const [selectedEpisode, setSelectedEpisode] = useState(1);
+            const [isLoading, setIsLoading] = useState(false);
+            useEffect(() => {
+                if (movie && isOpen) {
+                    setIsLoading(true);
+                    setIsPlaying(false);
+                    setSelectedSeason(1);
+                    setSelectedEpisode(1);
+                    const fetchDetails = async () => {
+                        try {
+                            const data = movie.media_type === "tv" ? await getTVDetails(movie.id) : await getMovieDetails(movie.id);
+                            setDetails(data);
+                        } catch (error) {
+                            console.error("Failed to fetch details:", error);
+                        } finally {
+                            setIsLoading(false);
+                        }
+                    };
+                    fetchDetails();
+                }
+            }, [movie, isOpen]);
+            useEffect(() => {
+                if (isOpen) document.body.style.overflow = "hidden";
+                else document.body.style.overflow = "";
+                return () => { document.body.style.overflow = ""; };
+            }, [isOpen]);
+            if (!isOpen || !movie) return null;
+            const backdropUrl = getBackdropUrl(movie.backdrop_path, "original");
+            const posterUrl = getImageUrl(movie.poster_path, "w500");
+            const title = movie.title || movie.name;
+            const releaseYear = (movie.release_date || movie.first_air_date)?.split("-")[0];
+            const isTV = movie.media_type === "tv";
+            const handlePlay = () => setIsPlaying(true);
+            const playerUrl = getVidkingUrl(movie.id, isTV ? "tv" : "movie", isTV ? selectedSeason : undefined, isTV ? selectedEpisode : undefined);
+            return (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-background/80 backdrop-blur-xl animate-fade-in" onClick={onClose} />
+                    <div className="relative w-full max-w-5xl max-h-[90vh] overflow-y-auto glass-card animate-scale-in custom-scrollbar">
+                        <Button variant="glass" size="icon" className="absolute top-4 right-4 z-20 rounded-full" onClick={onClose}>
+                            <X className="w-5 h-5" />
+                        </Button>
+                        <div className="relative aspect-video w-full overflow-hidden rounded-t-2xl">
+                            {isPlaying ? (
+                                <iframe src={playerUrl} className="w-full h-full" allowFullScreen allow="autoplay; fullscreen; encrypted-media" />
+                            ) : (
+                                <>
+                                    {backdropUrl ? <img src={backdropUrl} alt={title} className="w-full h-full object-cover" /> : <div className="w-full h-full bg-muted" />}
+                                    <div className="absolute inset-0 bg-gradient-to-t from-glass via-transparent to-transparent" />
+                                    <div className="absolute inset-0 flex items-center justify-center">
+                                        <Button variant="hero" size="xl" onClick={handlePlay} className="group animate-glow-pulse">
+                                            <Play className="w-6 h-6 fill-current group-hover:scale-110 transition-transform" />
+                                            Watch Now
+                                        </Button>
+                                    </div>
+                                </>
+                            )}
+                        </div>
+                        <div className="p-6 md:p-8 space-y-6">
+                            <div className="flex flex-col md:flex-row gap-6">
+                                {posterUrl && (
+                                    <div className="hidden md:block w-40 flex-shrink-0">
+                                        <img src={posterUrl} alt={title} className="w-full rounded-xl shadow-xl" />
+                                    </div>
+                                )}
+                                <div className="flex-1 space-y-4">
+                                    <div>
+                                        <div className="flex items-center gap-3 mb-2">
+                                            <span className="bg-primary/20 text-primary px-3 py-1 rounded-full text-xs font-semibold uppercase">
+                                                {isTV ? "TV Series" : "Movie"}
+                                            </span>
+                                            {details?.genres?.slice(0, 3).map((genre) => (
+                                                <span key={genre.id} className="glass px-3 py-1 rounded-full text-xs font-medium">
+                                                    {genre.name}
+                                                </span>
+                                            ))}
+                                        </div>
+                                        <h2 className="text-3xl md:text-4xl font-bold font-space">{title}</h2>
+                                        {details?.tagline && <p className="text-muted-foreground italic mt-2">"{details.tagline}"</p>}
+                                    </div>
+                                    <div className="flex flex-wrap items-center gap-6 text-sm">
+                                        <div className="flex items-center gap-2">
+                                            <Star className="w-5 h-5 text-yellow-500 fill-yellow-500" />
+                                            <span className="font-semibold">{movie.vote_average.toFixed(1)}</span>
+                                            <span className="text-muted-foreground">/ 10</span>
+                                        </div>
+                                        {releaseYear && (
+                                            <div className="flex items-center gap-2 text-muted-foreground">
+                                                <Calendar className="w-4 h-4" />
+                                                {releaseYear}
+                                            </div>
+                                        )}
+                                        {details?.runtime && (
+                                            <div className="flex items-center gap-2 text-muted-foreground">
+                                                <Clock className="w-4 h-4" />
+                                                {Math.floor(details.runtime / 60)}h {details.runtime % 60}m
+                                            </div>
+                                        )}
+                                        {details?.number_of_seasons && (
+                                            <div className="flex items-center gap-2 text-muted-foreground">
+                                                <Tv className="w-4 h-4" />
+                                                {details.number_of_seasons} Seasons
+                                            </div>
+                                        )}
+                                    </div>
+                                    <p className="text-muted-foreground leading-relaxed">{movie.overview || "No description available."}</p>
+                                </div>
+                            </div>
+                            {isTV && details?.number_of_seasons && (
+                                <div className="glass-card p-4 space-y-4">
+                                    <h3 className="font-semibold flex items-center gap-2">
+                                        <Tv className="w-5 h-5 text-primary" />
+                                        Select Episode
+                                    </h3>
+                                    <div className="flex flex-wrap gap-3">
+                                        <div className="flex-1 min-w-[150px]">
+                                            <label className="text-sm text-muted-foreground mb-2 block">Season</label>
+                                            <select
+                                                value={selectedSeason}
+                                                onChange={(e) => {
+                                                    setSelectedSeason(Number(e.target.value));
+                                                    setSelectedEpisode(1);
+                                                }}
+                                                className="w-full glass px-4 py-2 rounded-xl bg-glass/50 border border-glass-border/30 focus:outline-none focus:ring-2 focus:ring-primary"
+                                            >
+                                                {[...Array(details.number_of_seasons)].map((_, i) => (
+                                                    <option key={i + 1} value={i + 1}>
+                                                        Season {i + 1}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                        <div className="flex-1 min-w-[150px]">
+                                            <label className="text-sm text-muted-foreground mb-2 block">Episode</label>
+                                            <select
+                                                value={selectedEpisode}
+                                                onChange={(e) => setSelectedEpisode(Number(e.target.value))}
+                                                className="w-full glass px-4 py-2 rounded-xl bg-glass/50 border border-glass-border/30 focus:outline-none focus:ring-2 focus:ring-primary"
+                                            >
+                                                {[...Array(20)].map((_, i) => (
+                                                    <option key={i + 1} value={i + 1}>
+                                                        Episode {i + 1}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                        <div className="flex items-end">
+                                            <Button variant="hero" onClick={handlePlay}>
+                                                <Play className="w-4 h-4 fill-current" />
+                                                Play S{selectedSeason}E{selectedEpisode}
+                                            </Button>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        function Navbar({ onSearchClick, onCategoryChange, activeCategory }) {
+            const [isScrolled, setIsScrolled] = useState(false);
+            const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+            useEffect(() => {
+                const handleScroll = () => setIsScrolled(window.scrollY > 50);
+                window.addEventListener("scroll", handleScroll);
+                return () => window.removeEventListener("scroll", handleScroll);
+            }, []);
+            const navItems = [
+                { id: "home", label: "Home", icon: Home },
+                { id: "movies", label: "Movies", icon: Film },
+                { id: "tv", label: "TV Shows", icon: Tv },
+                { id: "trending", label: "Trending", icon: TrendingUp },
+            ];
+            return (
+                <nav className={cn("fixed top-0 left-0 right-0 z-50 transition-all duration-500", isScrolled ? "glass py-3" : "bg-gradient-to-b from-background/80 to-transparent py-5")}>
+                    <div className="container mx-auto px-4 md:px-8">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <div className="relative">
+                                    <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shadow-lg shadow-primary/30">
+                                        <Film className="w-6 h-6 text-primary-foreground" />
+                                    </div>
+                                    <div className="absolute -inset-1 bg-primary/20 rounded-xl blur-lg -z-10" />
+                                </div>
+                                <span className="text-xl font-bold font-space tracking-tight">
+                                    Kozy<span className="text-primary">Flix</span>
+                                </span>
+                            </div>
+                            <div className="hidden md:flex items-center gap-1">
+                                {navItems.map((item) => (
+                                    <button
+                                        key={item.id}
+                                        onClick={() => onCategoryChange(item.id)}
+                                        className={cn(
+                                            "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300",
+                                            activeCategory === item.id ? "bg-primary/20 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-glass/30"
+                                        )}
+                                    >
+                                        <item.icon className="w-4 h-4" />
+                                        {item.label}
+                                    </button>
+                                ))}
+                            </div>
+                            <div className="flex items-center gap-3">
+                                <Button variant="glass" size="icon" onClick={onSearchClick} className="rounded-xl">
+                                    <Search className="w-5 h-5" />
+                                </Button>
+                                <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
+                                    {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+                                </Button>
+                            </div>
+                        </div>
+                        {isMobileMenuOpen && (
+                            <div className="md:hidden mt-4 pb-4 animate-fade-in">
+                                <div className="glass-card p-2 space-y-1">
+                                    {navItems.map((item) => (
+                                        <button
+                                            key={item.id}
+                                            onClick={() => {
+                                                onCategoryChange(item.id);
+                                                setIsMobileMenuOpen(false);
+                                            }}
+                                            className={cn(
+                                                "flex items-center gap-3 w-full px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300",
+                                                activeCategory === item.id ? "bg-primary/20 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-glass/30"
+                                            )}
+                                        >
+                                            <item.icon className="w-5 h-5" />
+                                            {item.label}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </nav>
+            );
+        }
+
+        function SearchModal({ isOpen, onClose, onMovieSelect }) {
+            const [query, setQuery] = useState("");
+            const [results, setResults] = useState([]);
+            const [isLoading, setIsLoading] = useState(false);
+            const inputRef = useRef(null);
+            useEffect(() => {
+                if (isOpen) {
+                    document.body.style.overflow = "hidden";
+                    setTimeout(() => inputRef.current?.focus(), 100);
+                } else {
+                    document.body.style.overflow = "";
+                    setQuery("");
+                    setResults([]);
+                }
+                return () => { document.body.style.overflow = ""; };
+            }, [isOpen]);
+            useEffect(() => {
+                const searchTimeout = setTimeout(async () => {
+                    if (query.trim().length >= 2) {
+                        setIsLoading(true);
+                        try {
+                            const data = await searchMulti(query);
+                            setResults(data);
+                        } catch (error) {
+                            console.error("Search failed:", error);
+                        } finally {
+                            setIsLoading(false);
+                        }
+                    } else {
+                        setResults([]);
+                    }
+                }, 300);
+                return () => clearTimeout(searchTimeout);
+            }, [query]);
+            if (!isOpen) return null;
+            const handleSelect = (movie) => {
+                onMovieSelect(movie);
+                onClose();
+            };
+            return (
+                <div className="fixed inset-0 z-50">
+                    <div className="absolute inset-0 bg-background/90 backdrop-blur-2xl animate-fade-in" onClick={onClose} />
+                    <div className="relative h-full flex flex-col max-w-3xl mx-auto p-4 md:p-8">
+                        <div className="flex items-center gap-4 mb-6 animate-fade-in">
+                            <div className="flex-1 relative">
+                                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-6 h-6 text-muted-foreground" />
+                                <input
+                                    ref={inputRef}
+                                    type="text"
+                                    value={query}
+                                    onChange={(e) => setQuery(e.target.value)}
+                                    placeholder="Search movies and TV shows..."
+                                    className="w-full h-14 pl-14 pr-4 text-lg glass-card rounded-2xl bg-glass/50 border-glass-border/30 focus:outline-none focus:ring-2 focus:ring-primary placeholder:text-muted-foreground"
+                                />
+                                {isLoading && <div className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />}
+                            </div>
+                            <Button variant="glass" size="icon-lg" onClick={onClose} className="rounded-2xl">
+                                <X className="w-6 h-6" />
+                            </Button>
+                        </div>
+                        <div className="flex-1 overflow-y-auto custom-scrollbar space-y-2 animate-fade-in animation-delay-100">
+                            {results.length === 0 && query.length >= 2 && !isLoading && (
+                                <div className="text-center py-12">
+                                    <p className="text-muted-foreground">No results found for "{query}"</p>
+                                </div>
+                            )}
+                            {results.length === 0 && query.length < 2 && (
+                                <div className="text-center py-12">
+                                    <Search className="w-16 h-16 mx-auto text-muted-foreground/30 mb-4" />
+                                    <p className="text-muted-foreground">Start typing to search...</p>
+                                </div>
+                            )}
+                            {results.map((item, index) => {
+                                const posterUrl = getImageUrl(item.poster_path, "w200");
+                                const title = item.title || item.name;
+                                const releaseYear = (item.release_date || item.first_air_date)?.split("-")[0];
+                                return (
+                                    <div
+                                        key={`${item.media_type}-${item.id}`}
+                                        onClick={() => handleSelect(item)}
+                                        className="flex items-center gap-4 p-3 glass-card glass-hover cursor-pointer animate-fade-in"
+                                        style={{ animationDelay: `${index * 50}ms` }}
+                                    >
+                                        <div className="w-16 h-24 flex-shrink-0 rounded-lg overflow-hidden bg-muted">
+                                            {posterUrl ? (
+                                                <img src={posterUrl} alt={title} className="w-full h-full object-cover" />
+                                            ) : (
+                                                <div className="w-full h-full flex items-center justify-center">
+                                                    {item.media_type === "tv" ? <Tv className="w-6 h-6 text-muted-foreground" /> : <Film className="w-6 h-6 text-muted-foreground" />}
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex items-center gap-2 mb-1">
+                                                <span className={cn("px-2 py-0.5 rounded text-xs font-medium", item.media_type === "tv" ? "bg-blue-500/20 text-blue-400" : "bg-primary/20 text-primary")}>
+                                                    {item.media_type === "tv" ? "TV" : "Movie"}
+                                                </span>
+                                                {releaseYear && <span className="text-xs text-muted-foreground">{releaseYear}</span>}
+                                            </div>
+                                            <h3 className="font-semibold truncate">{title}</h3>
+                                            <div className="flex items-center gap-2 mt-1">
+                                                <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
+                                                <span className="text-sm text-muted-foreground">{item.vote_average.toFixed(1)}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        function App() {
+            const [activeCategory, setActiveCategory] = useState("home");
+            const [isSearchOpen, setIsSearchOpen] = useState(false);
+            const [selectedMovie, setSelectedMovie] = useState(null);
+            const [isModalOpen, setIsModalOpen] = useState(false);
+            const [heroMovie, setHeroMovie] = useState(null);
+            const [trending, setTrending] = useState([]);
+            const [popularMovies, setPopularMovies] = useState([]);
+            const [topRatedMovies, setTopRatedMovies] = useState([]);
+            const [upcomingMovies, setUpcomingMovies] = useState([]);
+            const [popularTV, setPopularTV] = useState([]);
+            const [topRatedTV, setTopRatedTV] = useState([]);
+            const [isLoading, setIsLoading] = useState(true);
+            useEffect(() => {
+                const fetchData = async () => {
+                    setIsLoading(true);
+                    try {
+                        const [trendingData, popularMoviesData, topRatedMoviesData, upcomingData, popularTVData, topRatedTVData] = await Promise.all([
+                            getTrending("all", "week"),
+                            getPopularMovies(),
+                            getTopRatedMovies(),
+                            getUpcomingMovies(),
+                            getPopularTV(),
+                            getTopRatedTV(),
+                        ]);
+                        setTrending(trendingData);
+                        setPopularMovies(popularMoviesData);
+                        setTopRatedMovies(topRatedMoviesData);
+                        setUpcomingMovies(upcomingData);
+                        setPopularTV(popularTVData);
+                        setTopRatedTV(topRatedTVData);
+                        if (trendingData.length > 0) {
+                            const heroCandidate = trendingData.find((m) => m.backdrop_path) || trendingData[0];
+                            setHeroMovie(heroCandidate);
+                        }
+                    } catch (error) {
+                        console.error("Failed to fetch data:", error);
+                    } finally {
+                        setIsLoading(false);
+                    }
+                };
+                fetchData();
+            }, []);
+            const handleMovieClick = (movie) => {
+                setSelectedMovie(movie);
+                setIsModalOpen(true);
+            };
+            const handlePlayHero = (movie) => {
+                setSelectedMovie(movie);
+                setIsModalOpen(true);
+            };
+            const renderContent = () => {
+                switch (activeCategory) {
+                    case "movies":
+                        return (
+                            <>
+                                <MovieCarousel title="Popular Movies" movies={popularMovies} onMovieClick={handleMovieClick} variant="large" isLoading={isLoading} />
+                                <MovieCarousel title="Top Rated Movies" movies={topRatedMovies} onMovieClick={handleMovieClick} isLoading={isLoading} />
+                                <MovieCarousel title="Upcoming Movies" movies={upcomingMovies} onMovieClick={handleMovieClick} isLoading={isLoading} />
+                            </>
+                        );
+                    case "tv":
+                        return (
+                            <>
+                                <MovieCarousel title="Popular TV Shows" movies={popularTV} onMovieClick={handleMovieClick} variant="large" isLoading={isLoading} />
+                                <MovieCarousel title="Top Rated TV Shows" movies={topRatedTV} onMovieClick={handleMovieClick} isLoading={isLoading} />
+                            </>
+                        );
+                    case "trending":
+                        return <MovieCarousel title="Trending This Week" movies={trending} onMovieClick={handleMovieClick} variant="large" isLoading={isLoading} />;
+                    default:
+                        return (
+                            <>
+                                <MovieCarousel title="Trending Now" movies={trending.slice(0, 10)} onMovieClick={handleMovieClick} variant="large" isLoading={isLoading} />
+                                <MovieCarousel title="Popular Movies" movies={popularMovies} onMovieClick={handleMovieClick} isLoading={isLoading} />
+                                <MovieCarousel title="Popular TV Shows" movies={popularTV} onMovieClick={handleMovieClick} isLoading={isLoading} />
+                                <MovieCarousel title="Top Rated Movies" movies={topRatedMovies} onMovieClick={handleMovieClick} isLoading={isLoading} />
+                                <MovieCarousel title="Coming Soon" movies={upcomingMovies} onMovieClick={handleMovieClick} isLoading={isLoading} />
+                            </>
+                        );
+                }
+            };
+            return (
+                <div className="min-h-screen">
+                    <Navbar onSearchClick={() => setIsSearchOpen(true)} onCategoryChange={setActiveCategory} activeCategory={activeCategory} />
+                    <HeroSection movie={heroMovie} onPlay={handlePlayHero} onInfo={handleMovieClick} />
+                    <main className="-mt-32 relative z-10">{renderContent()}</main>
+                    <Footer />
+                    <MovieModal movie={selectedMovie} isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+                    <SearchModal isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} onMovieSelect={handleMovieClick} />
+                </div>
+            );
+        }
+
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
 </body>
 </html>
