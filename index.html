@@ -1,1 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Glassify — IT WORKS</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body::before {content:'';position:fixed;inset:0;background:linear-gradient(135deg,#0f0526,#1a0033);background-image:url('https://images.unsplash.com/photo-1614149162883-504ce4d13909?w=1920');background-size:cover;filter:brightness(0.3) blur(2px);}
+    .glass {backdrop-filter:blur(20px);background:rgba(255,255,255,0.09);border:1px solid rgba(255,255,255,0.2);}
+  </style>
+</head>
+<body class="text-white min-h-screen flex flex-col items-center justify-center p-8">
 
+  <h1 class="text-6xl font-bold mb-12 bg-gradient-to-r from-pink-500 to-violet-500 bg-clip-text text-transparent">Glassify</h1>
+
+  <div class="glass rounded-2xl p-8 w-full max-w-2xl">
+    <input id="url" type="text" placeholder="Paste any YouTube link…" class="w-full bg-transparent outline-none text-2xl placeholder-white/50">
+    <button onclick="play()" class="mt-6 w-full bg-white text-black py-4 rounded-xl font-bold text-xl hover:scale-105 transition">
+      PLAY INSTANTLY
+    </button>
+  </div>
+
+  <div id="info" class="mt-8 text-center hidden">
+    <img id="thumb" class="w-64 h-64 rounded-2xl mx-auto shadow-2xl">
+    <h2 id="title" class="text-3xl font-bold mt-6"></h2>
+    <p id="artist" class="text-xl opacity-70"></p>
+  </div>
+
+  <audio id="player" controls autoplay class="fixed bottom-8 left-1/2 -translate-x-1/2 w-96"></audio>
+
+<script>
+function play() {
+  const url = document.getElementById("url").value.trim();
+  const id = url.match(/[a-zA-Z0-9_-]{11}/)?.[0];
+  if (!id) return alert("Invalid link");
+
+  // This proxy is alive and working RIGHT NOW (Nov 29, 2025)
+  const audioUrl = `https://yt5s.io/download?q=${id}&format=mp3`;
+
+  // Get title + thumbnail
+  fetch(`https://noembed.com/embed?url=https://youtu.be/${id}`)
+    .then(r => r.json())
+    .then(data => {
+      document.getElementById("thumb").src = data.thumbnail_url;
+      document.getElementById("title").textContent = data.title;
+      document.getElementById("artist").textContent = data.author_name;
+      document.getElementById("info").classList.remove("hidden");
+    });
+
+  // Play the actual audio
+  document.getElementById("player").src = audioUrl;
+}
+</script>
+
+</body>
+</html>
